@@ -121,7 +121,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-900 rounded-2xl md:rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors duration-300 relative">
+    <div className="flex flex-col h-full min-h-[400px] md:min-h-0 bg-white dark:bg-gray-900 rounded-2xl md:rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors duration-300 relative">
       {/* Header */}
       <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 z-20 shrink-0">
         <button 
@@ -231,7 +231,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             >
               <div className="flex justify-between items-start shrink-0 mb-1">
                 <span className={`
-                  text-base md:text-lg font-semibold w-7 h-7 flex items-center justify-center rounded-full transition-all
+                  text-lg md:text-lg font-semibold w-7 h-7 flex items-center justify-center rounded-full transition-all
                   ${day.isToday 
                     ? 'bg-primary-600 text-white shadow-md shadow-primary-500/30' 
                     : ''}

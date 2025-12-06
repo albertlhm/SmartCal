@@ -356,6 +356,11 @@ const App: React.FC = () => {
     setIsPanelOpen(true);
   };
 
+  // useCallback ensures the function reference remains stable across renders (like clock ticks)
+  const hideToast = useCallback(() => {
+    setToast(prev => ({ ...prev, visible: false }));
+  }, []);
+
   const showToast = (message: string, canUndo: boolean = false) => {
       setToast({ message, visible: true, canUndo });
   };
@@ -689,21 +694,21 @@ const App: React.FC = () => {
     <div className="flex flex-row gap-2 mb-4">
         <button 
           onClick={() => handleQuickAdd('events')}
-          className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 p-2 bg-primary-50 dark:bg-gray-800 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-gray-700 text-primary-600 rounded-xl transition-colors border border-primary-100 dark:border-gray-700 shadow-sm"
+          className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors border border-transparent dark:border-gray-700 shadow-sm"
         >
             <Plus size={18} />
             <span className="text-[10px] sm:text-xs font-semibold text-center leading-tight">{t.addReminder}</span>
         </button>
         <button 
           onClick={() => handleQuickAdd('todos')}
-          className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 p-2 bg-green-50 dark:bg-gray-800 dark:text-green-400 hover:bg-green-100 dark:hover:bg-gray-700 text-green-600 rounded-xl transition-colors border border-green-100 dark:border-gray-700 shadow-sm"
+          className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors border border-transparent dark:border-gray-700 shadow-sm"
         >
             <ListTodo size={18} />
             <span className="text-[10px] sm:text-xs font-semibold text-center leading-tight">{t.addTodo}</span>
         </button>
         <button 
           onClick={() => setIsAllTodosOpen(true)}
-          className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 p-2 bg-orange-50 dark:bg-gray-800 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-gray-700 text-orange-600 rounded-xl transition-colors border border-orange-100 dark:border-gray-700 shadow-sm"
+          className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors border border-transparent dark:border-gray-700 shadow-sm"
         >
             <CheckSquare size={18} />
             <span className="text-[10px] sm:text-xs font-semibold text-center leading-tight">{t.allTodos}</span>
@@ -873,26 +878,28 @@ const App: React.FC = () => {
              ))}
          </div>
 
-         {/* Calendar Grid Container */}
-         <div className="flex-1 px-2 md:px-6 lg:px-8 pb-4 min-h-0 flex flex-col">
-             <CalendarGrid 
-               currentDate={currentDate}
-               onPrevMonth={handlePrevMonth}
-               onNextMonth={handleNextMonth}
-               onSetDate={handleSetDate}
-               onSelectDate={handleSelectDate}
-               reminders={reminders}
-               recurringReminders={recurringReminders}
-               todos={todos}
-               selectedDateStr={selectedDateStr}
-               language={language}
-               categoryFilter={categoryFilter}
-               focusMode={focusMode}
-               onToggleFocusMode={toggleFocusMode}
-             />
+         {/* Calendar Grid Container - Scrollable on mobile */}
+         <div className="flex-1 px-2 md:px-6 lg:px-8 pb-4 min-h-0 flex flex-col overflow-y-auto md:overflow-hidden custom-scrollbar">
+             <div className="flex-1 min-h-[400px] md:min-h-0 flex flex-col">
+                 <CalendarGrid 
+                   currentDate={currentDate}
+                   onPrevMonth={handlePrevMonth}
+                   onNextMonth={handleNextMonth}
+                   onSetDate={handleSetDate}
+                   onSelectDate={handleSelectDate}
+                   reminders={reminders}
+                   recurringReminders={recurringReminders}
+                   todos={todos}
+                   selectedDateStr={selectedDateStr}
+                   language={language}
+                   categoryFilter={categoryFilter}
+                   focusMode={focusMode}
+                   onToggleFocusMode={toggleFocusMode}
+                 />
+             </div>
              
              {/* Mobile-Only Bottom Section (Today Agenda + Buttons) - Kept out of scroll flow to prevent double scrollbars if possible, or simple block below */}
-             <div className="md:hidden mt-2 shrink-0">
+             <div className="md:hidden mt-2 shrink-0 pb-16">
                 <div className="flex items-center justify-between px-2 mb-2">
                   <h3 className="text-sm font-bold text-gray-800 dark:text-white">{t.quickActions}</h3>
                   <button onClick={() => setIsStatsOpen(true)} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-600 dark:text-gray-300">
@@ -902,7 +909,7 @@ const App: React.FC = () => {
                 <QuickActionButtons />
                 
                 {/* Simplified Agenda for Mobile Bottom */}
-                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-3 h-auto min-h-[160px] max-h-[40vh] flex-1">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-3 h-auto min-h-[160px] flex-1">
                    <TodayAgendaWidget />
                 </div>
              </div>
@@ -915,7 +922,7 @@ const App: React.FC = () => {
          message={toast.message} 
          isVisible={toast.visible} 
          onUndo={toast.canUndo ? handleUndo : undefined}
-         onClose={() => setToast({ ...toast, visible: false })}
+         onClose={hideToast}
          language={language}
       />
 
