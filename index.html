@@ -13,7 +13,6 @@
     <meta name="apple-mobile-web-app-title" content="SmartCal" />
     <link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f4c5.png" />
 
-    <!-- We keep Tailwind CDN for simplicity in this setup, though building it via PostCSS is cleaner for production -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
@@ -73,24 +72,41 @@
   <script type="importmap">
 {
   "imports": {
-    "react": "https://aistudiocdn.com/react@^19.2.1",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
     "react/": "https://aistudiocdn.com/react@^19.2.1/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
+    "react": "https://aistudiocdn.com/react@^19.2.1",
     "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
-    "firebase/": "https://aistudiocdn.com/firebase@^12.6.0/",
-    "vite": "https://aistudiocdn.com/vite@^7.2.6",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
+    "firebase/app": "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js",
+    "firebase/auth": "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js",
+    "firebase/analytics": "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.6.0/"
   }
 }
 </script>
 </head>
   <body>
     <div id="root"></div>
-    
-    <!-- IMPORTANT: The entry point for the React application -->
-    <script type="module" src="/index.tsx"></script>
-    
+    <script type="module">
+      import { initializeApp } from "firebase/app";
+      import { getAnalytics } from "firebase/analytics";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyDS3qMVjUiJo7xWGMNnPD24g39o5_Xf84U",
+        authDomain: "smartcal-4ddce.firebaseapp.com",
+        projectId: "smartcal-4ddce",
+        storageBucket: "smartcal-4ddce.firebasestorage.app",
+        messagingSenderId: "335166793360",
+        appId: "1:335166793360:web:c8bba7acfd3617d8bb1a15",
+        measurementId: "G-5P4MQ8TPYY"
+      };
+
+      // Initialize Firebase globally if needed, though services/firebase.ts handles the main app instance
+      // We keep this here just to satisfy the previous request for analytics injection in HTML
+      const app = initializeApp(firebaseConfig);
+      const analytics = getAnalytics(app);
+    </script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
