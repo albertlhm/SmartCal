@@ -39,6 +39,7 @@ const App: React.FC = () => {
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [language, setLanguage] = useState<Language>('zh');
+  // currentTime state kept for notification logic, but UI removed
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAllTodosOpen, setIsAllTodosOpen] = useState(false);
@@ -196,10 +197,10 @@ const App: React.FC = () => {
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
-      setCurrentTime(now);
+      setCurrentTime(now); // Used only for internal timer logic, not display
 
       if (notificationsEnabled) {
-        // Construct current minute string (e.g., "2023-10-27 14:30")
+        // Construct current minute string (e.g., "2023-10-27 14:30") using local time
         const currentMinuteStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         
         if (lastCheckedMinute.current !== currentMinuteStr) {
@@ -216,7 +217,7 @@ const App: React.FC = () => {
              const eventTs = eventDateTime.getTime();
 
              // Check alerts (minutes before)
-             const alertOffsets = rem.alerts && rem.alerts.length > 0 ? rem.alerts : [0]; // default to 0 (at time) if no alerts set, OR check exact time logic below
+             const alertOffsets = rem.alerts && rem.alerts.length > 0 ? rem.alerts : [0]; // default to 0 (at time) if no alerts set
              
              // If no alerts array, we use the old exact time logic (0 offset)
              if (!rem.alerts || rem.alerts.length === 0) {
@@ -257,20 +258,11 @@ const App: React.FC = () => {
           todaysStatic.forEach(rem => checkAndNotify(rem, todayDateStr));
 
           // 2. Check recurring reminders
-          // For recurring, we must check if today is an occurrence
           recurringReminders.forEach(rem => {
               if (isOccurrence(rem, todayDateStr)) {
                   checkAndNotify(rem, todayDateStr);
               }
           });
-          
-          // 3. Optimization: Check tomorrows alerts (for 1 day before alerts)? 
-          // For simplicity, the logic above calculates the Trigger Time. 
-          // If I set "1 day before" for an event tomorrow, triggerTime is TODAY.
-          // So we actually need to iterate ALL active reminders (or at least next few days) to see if their alert trigger falls on NOW.
-          // Due to performance, checking ALL might be heavy. 
-          // Let's stick to "Today's Events" alerts for now (0-24h before).
-          // To support >24h alerts, we'd need a more complex query.
         }
       }
 
@@ -355,8 +347,9 @@ const App: React.FC = () => {
 
   const handleQuickAdd = (type: 'events' | 'todos') => {
     if (!selectedDateStr) {
-        const today = new Date();
-        const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const d = new Date();
+        // Use local date for default selection
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         setSelectedDateStr(dateStr);
     }
     setInitialPanelTab(type);
@@ -452,7 +445,6 @@ const App: React.FC = () => {
     try {
       // Find item for undo
       let itemToDelete: Reminder | undefined;
-      // Need to search all because we might not have date context in All views
       // Search in recurring first
       itemToDelete = recurringReminders.find(r => r.id === id);
       if (!itemToDelete) {
@@ -501,10 +493,6 @@ const App: React.FC = () => {
 
       await DataService.updateTodo(user.id, updatedTodo);
 
-      // We generally don't add simple toggles to history stack to avoid clutter, 
-      // but if it's text edit, maybe. For now, let's skip history for updateTodo to keep it simple,
-      // or only for text changes.
-      // Implementing for completeness:
       if (old) {
           // addToHistory({ type: 'UPDATE_TODO', data: old }); 
       }
@@ -564,7 +552,7 @@ const App: React.FC = () => {
   const handleExport = () => {
     const data = {
       version: 2,
-      reminders, // Note: This is the local state which is synced with DB
+      reminders,
       recurringReminders,
       todos,
       exportDate: new Date().toISOString(),
@@ -632,7 +620,10 @@ const App: React.FC = () => {
 
   // Get today's events for the sidebar/mobile view
   const todayEvents = useMemo(() => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    // FIX: Use local time instead of UTC (toISOString) to match calendar logic
+    const d = new Date();
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    
     const todaysStatic = reminders[todayStr] || [];
     const todaysRecurring = recurringReminders.filter(r => isOccurrence(r, todayStr));
     
@@ -698,21 +689,21 @@ const App: React.FC = () => {
     <div className="flex flex-row gap-2 mb-4">
         <button 
           onClick={() => handleQuickAdd('events')}
-          className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 p-2 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/40 text-primary-600 dark:text-primary-400 rounded-xl transition-colors border border-primary-100 dark:border-primary-800/30 shadow-sm"
+          className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 p-2 bg-primary-50 dark:bg-gray-800 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-gray-700 text-primary-600 rounded-xl transition-colors border border-primary-100 dark:border-gray-700 shadow-sm"
         >
             <Plus size={18} />
             <span className="text-[10px] sm:text-xs font-semibold text-center leading-tight">{t.addReminder}</span>
         </button>
         <button 
           onClick={() => handleQuickAdd('todos')}
-          className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 p-2 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 text-green-600 dark:text-green-400 rounded-xl transition-colors border border-green-100 dark:border-green-800/30 shadow-sm"
+          className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 p-2 bg-green-50 dark:bg-gray-800 dark:text-green-400 hover:bg-green-100 dark:hover:bg-gray-700 text-green-600 rounded-xl transition-colors border border-green-100 dark:border-gray-700 shadow-sm"
         >
             <ListTodo size={18} />
             <span className="text-[10px] sm:text-xs font-semibold text-center leading-tight">{t.addTodo}</span>
         </button>
         <button 
           onClick={() => setIsAllTodosOpen(true)}
-          className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 p-2 bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/40 text-orange-600 dark:text-orange-400 rounded-xl transition-colors border border-orange-100 dark:border-orange-800/30 shadow-sm"
+          className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 p-2 bg-orange-50 dark:bg-gray-800 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-gray-700 text-orange-600 rounded-xl transition-colors border border-orange-100 dark:border-gray-700 shadow-sm"
         >
             <CheckSquare size={18} />
             <span className="text-[10px] sm:text-xs font-semibold text-center leading-tight">{t.allTodos}</span>
@@ -822,23 +813,8 @@ const App: React.FC = () => {
              <ListTodo size={28} />
           </button>
 
-          {/* Info Box & Live Clock */}
+          {/* Info Box & Live Clock - REMOVED AS REQUESTED */}
           <div className="hidden lg:flex flex-col flex-1 overflow-hidden">
-            <div className="mb-4 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-800/50 p-5 rounded-2xl flex flex-col gap-3 border border-gray-100 dark:border-gray-700 shadow-sm">
-              <div className="flex items-center gap-2 mb-1">
-                <ClockIcon size={16} className="text-primary-500" />
-                <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t.currentTime}</span>
-              </div>
-              <div>
-                <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 font-mono leading-none tracking-tight">
-                  {currentTime.toLocaleTimeString(language === 'zh' ? 'zh-CN' : 'en-US', { hour12: false })}
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 font-medium">
-                  {currentTime.toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-                </p>
-              </div>
-            </div>
-
             <QuickActionButtons />
             <TodayAgendaWidget />
           </div>
@@ -926,7 +902,7 @@ const App: React.FC = () => {
                 <QuickActionButtons />
                 
                 {/* Simplified Agenda for Mobile Bottom */}
-                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-3 h-32 md:h-64">
+                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-3 h-auto min-h-[160px] max-h-[40vh] flex-1">
                    <TodayAgendaWidget />
                 </div>
              </div>

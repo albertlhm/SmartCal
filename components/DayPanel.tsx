@@ -30,15 +30,6 @@ const CATEGORIES: { value: EventCategory; color: string; bg: string }[] = [
   { value: 'other', color: 'gray', bg: 'bg-gray-500' },
 ];
 
-const ALERT_OPTIONS = [
-    { value: 0, label: 'alert0' },
-    { value: 5, label: 'alert5' },
-    { value: 15, label: 'alert15' },
-    { value: 30, label: 'alert30' },
-    { value: 60, label: 'alert60' },
-    { value: 1440, label: 'alert1440' },
-];
-
 const DayPanel: React.FC<DayPanelProps> = ({
   dateStr,
   isOpen,
@@ -69,8 +60,7 @@ const DayPanel: React.FC<DayPanelProps> = ({
   const [desc, setDesc] = useState('');
   const [category, setCategory] = useState<EventCategory>('work');
   const [repeat, setRepeat] = useState<RepeatFrequency>('none');
-  const [selectedAlerts, setSelectedAlerts] = useState<number[]>([]);
-
+  
   // Todo Form State
   const [todoText, setTodoText] = useState('');
 
@@ -95,7 +85,6 @@ const DayPanel: React.FC<DayPanelProps> = ({
       setFormDate(dateStr);
       setCategory('work');
       setRepeat('none');
-      setSelectedAlerts([]);
       setAiPrompt('');
       setTodoText('');
       setAiError('');
@@ -110,7 +99,6 @@ const DayPanel: React.FC<DayPanelProps> = ({
     setFormDate(rem.date);
     setCategory(rem.category || 'work');
     setRepeat(rem.repeat || 'none');
-    setSelectedAlerts(rem.alerts || []);
     setEditingId(rem.id);
     setAddMode('manual');
     setActiveTab('events');
@@ -125,14 +113,6 @@ const DayPanel: React.FC<DayPanelProps> = ({
   const getCategoryColor = (cat: EventCategory) => {
       const found = CATEGORIES.find(c => c.value === cat);
       return found ? found.color : 'blue';
-  };
-
-  const toggleAlert = (val: number) => {
-      if (selectedAlerts.includes(val)) {
-          setSelectedAlerts(selectedAlerts.filter(v => v !== val));
-      } else {
-          setSelectedAlerts([...selectedAlerts, val]);
-      }
   };
 
   const handleManualSubmit = (e: React.FormEvent) => {
@@ -152,7 +132,6 @@ const DayPanel: React.FC<DayPanelProps> = ({
             color,
             category,
             repeat,
-            alerts: selectedAlerts,
             createdAt: Date.now(),
         };
         onUpdateReminder(updated);
@@ -167,7 +146,6 @@ const DayPanel: React.FC<DayPanelProps> = ({
             color,
             category,
             repeat,
-            alerts: selectedAlerts,
             createdAt: Date.now(),
         };
         onAddReminder(newReminder);
@@ -282,7 +260,7 @@ const DayPanel: React.FC<DayPanelProps> = ({
         
         {/* EVENTS TAB */}
         {activeTab === 'events' && (
-            <div className="p-6 space-y-4">
+            <div className="p-4 space-y-3">
                  {reminders.length === 0 ? (
                     <div className="text-center py-10 text-gray-400 dark:text-gray-600">
                         <Clock size={48} className="mx-auto mb-3 opacity-20" />
@@ -290,63 +268,57 @@ const DayPanel: React.FC<DayPanelProps> = ({
                     </div>
                  ) : (
                     reminders.sort((a, b) => a.time.localeCompare(b.time)).map((rem) => (
-                        <div key={rem.id} className={`group flex items-start p-4 bg-white dark:bg-gray-800/60 border rounded-2xl shadow-sm hover:shadow-md transition-all ${editingId === rem.id ? 'ring-2 ring-primary-500 border-transparent' : 'border-gray-100 dark:border-gray-800'}`}>
-                            <div className={`w-1.5 h-1.5 mt-2 rounded-full mr-4 shrink-0 shadow-sm ${
-                                rem.color === 'red' ? 'bg-red-500 shadow-red-500/50' :
-                                rem.color === 'green' ? 'bg-green-500 shadow-green-500/50' :
-                                rem.color === 'purple' ? 'bg-purple-500 shadow-purple-500/50' :
-                                rem.color === 'orange' ? 'bg-orange-500 shadow-orange-500/50' :
-                                rem.color === 'gray' ? 'bg-gray-500 shadow-gray-500/50' :
-                                'bg-blue-500 shadow-blue-500/50'
-                            }`} />
-                            <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-start">
-                                <h4 className="font-semibold text-gray-800 dark:text-gray-100 truncate">{rem.title}</h4>
-                                <div className="flex flex-col items-end">
-                                    <span className="text-xs font-mono text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700/50 px-2 py-0.5 rounded-md ml-2">{rem.time}</span>
+                        <div key={rem.id} className={`group relative flex flex-col p-3 bg-white dark:bg-gray-800/60 border rounded-xl shadow-sm hover:shadow-md transition-all ${editingId === rem.id ? 'ring-2 ring-primary-500 border-transparent' : 'border-gray-100 dark:border-gray-800'}`}>
+                            <div className="flex items-center w-full">
+                                <div className={`w-2 h-2 rounded-full mr-3 shrink-0 shadow-sm ${
+                                    rem.color === 'red' ? 'bg-red-500 shadow-red-500/50' :
+                                    rem.color === 'green' ? 'bg-green-500 shadow-green-500/50' :
+                                    rem.color === 'purple' ? 'bg-purple-500 shadow-purple-500/50' :
+                                    rem.color === 'orange' ? 'bg-orange-500 shadow-orange-500/50' :
+                                    rem.color === 'gray' ? 'bg-gray-500 shadow-gray-500/50' :
+                                    'bg-blue-500 shadow-blue-500/50'
+                                }`} />
+                                
+                                <div className="flex-1 min-w-0 flex items-center gap-2">
+                                    <h4 className="font-semibold text-base text-gray-800 dark:text-gray-100 truncate">{rem.title}</h4>
+                                    <span className="text-sm font-mono text-gray-400 dark:text-gray-500">{rem.time}</span>
                                     {rem.repeat && rem.repeat !== 'none' && (
-                                        <div className="flex items-center gap-1 text-[10px] text-gray-400 mt-1">
-                                            <Repeat size={10} />
-                                            <span>
-                                                {rem.repeat === 'daily' ? t.repeatDaily :
-                                                 rem.repeat === 'weekly' ? t.repeatWeekly :
-                                                 rem.repeat === 'monthly' ? t.repeatMonthly : t.repeatYearly}
+                                        <div className="flex items-center text-gray-400" title={rem.repeat}>
+                                            <Repeat size={12} />
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
+                                    <button 
+                                        onClick={() => handleEditReminder(rem)}
+                                        className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+                                        title={t.edit}
+                                    >
+                                        <Pencil size={16} />
+                                    </button>
+                                    <button 
+                                        onClick={() => onDeleteReminder(rem.id)}
+                                        className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                                        title={t.delete}
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {(rem.description || rem.category) && (
+                                <div className="pl-5 mt-1 flex flex-col gap-1">
+                                    {rem.description && <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{rem.description}</p>}
+                                    {rem.category && (
+                                        <div className="flex">
+                                            <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 capitalize">
+                                                {t[`cat_${rem.category}` as keyof typeof t]}
                                             </span>
                                         </div>
                                     )}
                                 </div>
-                                </div>
-                                {rem.description && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{rem.description}</p>}
-                                <div className="flex flex-wrap gap-1 mt-2">
-                                    {rem.category && (
-                                        <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 capitalize">
-                                            {t[`cat_${rem.category}` as keyof typeof t]}
-                                        </span>
-                                    )}
-                                    {rem.alerts && rem.alerts.length > 0 && (
-                                        <span className="inline-flex items-center gap-0.5 text-[10px] px-2 py-0.5 rounded-full bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400">
-                                            <Bell size={10} /> {rem.alerts.length}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2">
-                                <button 
-                                    onClick={() => handleEditReminder(rem)}
-                                    className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
-                                    title={t.edit}
-                                >
-                                    <Pencil size={16} />
-                                </button>
-                                <button 
-                                    onClick={() => onDeleteReminder(rem.id)}
-                                    className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                                    title={t.delete}
-                                >
-                                    <Trash2 size={16} />
-                                </button>
-                            </div>
+                            )}
                         </div>
                     ))
                  )}
@@ -363,14 +335,14 @@ const DayPanel: React.FC<DayPanelProps> = ({
                     </div>
                  ) : (
                      todos.map(todo => (
-                        <div key={todo.id} className={`group flex items-center p-3 bg-white dark:bg-gray-800/60 border rounded-xl transition-all ${editingId === todo.id ? 'ring-2 ring-primary-500 border-transparent' : 'border-gray-100 dark:border-gray-800 shadow-sm'}`}>
+                        <div key={todo.id} className={`group flex items-center p-4 bg-white dark:bg-gray-800/60 border rounded-xl transition-all ${editingId === todo.id ? 'ring-2 ring-primary-500 border-transparent' : 'border-gray-100 dark:border-gray-800 shadow-sm'}`}>
                              <button 
                                 onClick={() => onToggleTodo(todo.id)}
-                                className={`mr-3 transition-colors ${todo.completed ? 'text-primary-500' : 'text-gray-300 dark:text-gray-600 hover:text-primary-500'}`}
+                                className={`mr-4 transition-colors ${todo.completed ? 'text-primary-500' : 'text-gray-300 dark:text-gray-600 hover:text-primary-500'}`}
                              >
-                                 {todo.completed ? <CheckSquare size={20} /> : <Square size={20} />}
+                                 {todo.completed ? <CheckSquare size={24} /> : <Square size={24} />}
                              </button>
-                             <span className={`flex-1 text-sm ${todo.completed ? 'line-through text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}>
+                             <span className={`flex-1 text-base ${todo.completed ? 'line-through text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}>
                                  {todo.text}
                              </span>
                              
@@ -521,23 +493,6 @@ const DayPanel: React.FC<DayPanelProps> = ({
                         <ChevronDown size={14} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
                     </div>
                </div>
-            </div>
-
-            {/* Multiple Alerts Selection */}
-            <div className="pt-1">
-                 <label className="text-[10px] uppercase text-gray-400 font-bold mb-1 block pl-1">{t.alertsLabel}</label>
-                 <div className="flex flex-wrap gap-2">
-                     {ALERT_OPTIONS.map(opt => (
-                         <button
-                            key={opt.value}
-                            type="button"
-                            onClick={() => toggleAlert(opt.value)}
-                            className={`text-xs px-2.5 py-1.5 rounded-lg border transition-all ${selectedAlerts.includes(opt.value) ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-800 text-primary-600 dark:text-primary-400 font-medium' : 'bg-transparent border-gray-200 dark:border-gray-700 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'}`}
-                         >
-                             {t[opt.label as keyof typeof t]}
-                         </button>
-                     ))}
-                 </div>
             </div>
 
             <textarea

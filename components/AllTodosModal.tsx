@@ -19,7 +19,7 @@ const AllTodosModal: React.FC<AllTodosModalProps> = ({ isOpen, onClose, todos, o
 
   // Flatten and sort todos
   const allTodosList = Object.entries(todos).flatMap(([date, list]) => 
-    list.map(todo => ({ ...todo, dateKey: date }))
+    (list as Todo[]).map(todo => ({ ...todo, dateKey: date }))
   ).sort((a, b) => {
     // Sort by date descending
     return b.dateKey.localeCompare(a.dateKey);

@@ -32,7 +32,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, reminders, r
     
     // Reminders
     Object.entries(reminders).forEach(([date, dayReminders]) => {
-      dayReminders.forEach(r => {
+      (dayReminders as Reminder[]).forEach(r => {
         if (r.title.toLowerCase().includes(term) || (r.description && r.description.toLowerCase().includes(term))) {
             allItems.push({ type: 'reminder', data: r, date, sortKey: r.time });
         }
@@ -49,7 +49,7 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, reminders, r
 
     // Todos
     Object.entries(todos).forEach(([date, dayTodos]) => {
-        dayTodos.forEach(todo => {
+        (dayTodos as Todo[]).forEach(todo => {
             if (todo.text.toLowerCase().includes(term)) {
                 allItems.push({ type: 'todo', data: todo, date, sortKey: '00:00' });
             }

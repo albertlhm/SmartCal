@@ -231,7 +231,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             >
               <div className="flex justify-between items-start shrink-0 mb-1">
                 <span className={`
-                  text-sm md:text-base font-semibold w-7 h-7 flex items-center justify-center rounded-full transition-all
+                  text-base md:text-lg font-semibold w-7 h-7 flex items-center justify-center rounded-full transition-all
                   ${day.isToday 
                     ? 'bg-primary-600 text-white shadow-md shadow-primary-500/30' 
                     : ''}

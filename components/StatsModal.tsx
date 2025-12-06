@@ -32,7 +32,7 @@ const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, reminders, rec
     let totalTodos = 0;
     let completedTodos = 0;
     Object.values(todos).forEach(list => {
-      list.forEach(todo => {
+      (list as Todo[]).forEach(todo => {
         totalTodos++;
         if (todo.completed) completedTodos++;
       });
@@ -49,8 +49,9 @@ const StatsModal: React.FC<StatsModalProps> = ({ isOpen, onClose, reminders, rec
     // Check static
     Object.entries(reminders).forEach(([date, list]) => {
       if (date.startsWith(currentMonthStr)) {
-        monthEventsCount += list.length;
-        list.forEach(r => {
+        const remindersList = list as Reminder[];
+        monthEventsCount += remindersList.length;
+        remindersList.forEach(r => {
            const cat = r.category || 'other';
            categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
         });
