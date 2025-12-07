@@ -90,7 +90,6 @@ export const TRANSLATIONS = {
     cat_other: '其他',
     categoryLabel: '分类',
     filterAll: '全部',
-    // New Translations
     undo: '撤销',
     actionUndone: '操作已撤销',
     reminderDeleted: '提醒已删除',
@@ -106,6 +105,16 @@ export const TRANSLATIONS = {
     focusMode: '专注模式',
     focusModeOn: '隐藏过去事件',
     focusModeOff: '显示所有事件',
+    // New Translations
+    viewMonth: '月视图',
+    viewWeek: '周视图',
+    viewAgenda: '日程',
+    tabCalendar: '日历',
+    tabTodos: '待办',
+    tabStats: '统计',
+    tabProfile: '我的',
+    viewDetails: '查看详情',
+    quickPreview: '快速预览',
   },
   en: {
     appName: 'SmartCal',
@@ -196,7 +205,6 @@ export const TRANSLATIONS = {
     cat_other: 'Other',
     categoryLabel: 'Category',
     filterAll: 'All',
-    // New Translations
     undo: 'Undo',
     actionUndone: 'Action undone',
     reminderDeleted: 'Event deleted',
@@ -212,5 +220,15 @@ export const TRANSLATIONS = {
     focusMode: 'Focus Mode',
     focusModeOn: 'Hide past events',
     focusModeOff: 'Show all events',
+    // New Translations
+    viewMonth: 'Month',
+    viewWeek: 'Week',
+    viewAgenda: 'Agenda',
+    tabCalendar: 'Calendar',
+    tabTodos: 'Todos',
+    tabStats: 'Stats',
+    tabProfile: 'Me',
+    viewDetails: 'View Details',
+    quickPreview: 'Quick Preview',
   }
 };

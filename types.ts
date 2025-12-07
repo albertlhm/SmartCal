@@ -13,7 +13,7 @@ export interface Reminder {
   createdAt: number;
   repeat?: RepeatFrequency;
   alerts?: number[]; // Array of minutes before event to notify (e.g., [15, 60])
-  isCompleted?: boolean; // New field for completion status
+  isCompleted?: boolean;
 }
 
 export interface Todo {
@@ -50,9 +50,9 @@ export interface UserPreferences {
 
 export type Language = 'zh' | 'en';
 
-export enum CalendarView {
-  MONTH = 'MONTH',
-}
+export type CalendarView = 'month' | 'week' | 'agenda';
+
+export type MobileTab = 'calendar' | 'todos' | 'stats' | 'profile';
 
 // History / Undo Types
 export type ActionType = 'ADD_REMINDER' | 'UPDATE_REMINDER' | 'DELETE_REMINDER' | 'ADD_TODO' | 'UPDATE_TODO' | 'DELETE_TODO';
