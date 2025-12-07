@@ -8,7 +8,7 @@ import {
   FirestoreError
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { Reminder, Todo } from "../types";
+import { Reminder, Todo, UserPreferences } from "../types";
 
 export const DataService = {
   // --- Reminders ---
@@ -116,6 +116,29 @@ export const DataService = {
     } catch (e) {
       console.error("Error deleting todo:", e);
       throw e;
+    }
+  },
+  
+  // --- Preferences ---
+  
+  subscribeToPreferences: (
+    userId: string,
+    onData: (prefs: UserPreferences) => void
+  ) => {
+    const ref = doc(db, `users/${userId}/settings/general`);
+    return onSnapshot(ref, (doc) => {
+      if (doc.exists()) {
+        onData(doc.data() as UserPreferences);
+      }
+    });
+  },
+
+  updatePreferences: async (userId: string, prefs: UserPreferences) => {
+    try {
+      const ref = doc(db, `users/${userId}/settings/general`);
+      await setDoc(ref, prefs, { merge: true });
+    } catch (e) {
+      console.error("Error updating preferences:", e);
     }
   },
   

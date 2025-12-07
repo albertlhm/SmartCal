@@ -13,6 +13,7 @@ export interface Reminder {
   createdAt: number;
   repeat?: RepeatFrequency;
   alerts?: number[]; // Array of minutes before event to notify (e.g., [15, 60])
+  isCompleted?: boolean; // New field for completion status
 }
 
 export interface Todo {
@@ -40,6 +41,11 @@ export interface SmartEventExtraction {
 export interface User {
   id: string;
   username: string;
+}
+
+export interface UserPreferences {
+  theme?: 'dark' | 'light';
+  language?: Language;
 }
 
 export type Language = 'zh' | 'en';

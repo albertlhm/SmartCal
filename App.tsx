@@ -11,7 +11,7 @@ import { TRANSLATIONS } from './constants/translations';
 import { AuthService } from './services/authService';
 import { DataService } from './services/dataService';
 import { isOccurrence } from './utils/recurrence';
-import { Calendar, Moon, Sun, Clock as ClockIcon, Search, Languages, Download, Upload, Plus, ListTodo, Trash2, LogIn, LogOut, User as UserIcon, CheckSquare, Bell, BellOff, PieChart, AlertTriangle } from 'lucide-react';
+import { Calendar, Moon, Sun, Clock as ClockIcon, Search, Languages, Download, Upload, Plus, ListTodo, Trash2, LogIn, LogOut, User as UserIcon, CheckSquare, Bell, BellOff, PieChart, AlertTriangle, CheckCircle2, Circle } from 'lucide-react';
 
 // Storage keys
 const STORAGE_KEY_THEME = 'smartcal_theme';
@@ -163,9 +163,20 @@ const App: React.FC = () => {
       }
     );
 
+    // Subscribe to Preferences
+    const unsubPrefs = DataService.subscribeToPreferences(user.id, (prefs) => {
+      if (prefs.theme) {
+        setIsDarkMode(prefs.theme === 'dark');
+      }
+      if (prefs.language) {
+        setLanguage(prefs.language);
+      }
+    });
+
     return () => {
       unsubReminders();
       unsubTodos();
+      unsubPrefs();
     };
   }, [user]);
 
@@ -298,8 +309,22 @@ const App: React.FC = () => {
     setUser(null);
   };
 
-  const toggleTheme = () => setIsDarkMode(!isDarkMode);
-  const toggleLanguage = () => setLanguage(l => l === 'zh' ? 'en' : 'zh');
+  const toggleTheme = () => {
+    const newMode = !isDarkMode;
+    setIsDarkMode(newMode);
+    if (user) {
+      DataService.updatePreferences(user.id, { theme: newMode ? 'dark' : 'light' });
+    }
+  };
+
+  const toggleLanguage = () => {
+    const newLang = language === 'zh' ? 'en' : 'zh';
+    setLanguage(newLang);
+    if (user) {
+      DataService.updatePreferences(user.id, { language: newLang });
+    }
+  };
+  
   const toggleFocusMode = () => setFocusMode(!focusMode);
   
   const toggleNotifications = async () => {
@@ -444,6 +469,32 @@ const App: React.FC = () => {
       console.error("Failed to update reminder", e);
     }
   }, [user, reminders, recurringReminders, t]);
+
+  const handleToggleReminder = useCallback(async (id: string, dateOverride?: string) => {
+    if (!user) return;
+    try {
+      // Search in recurring first
+      let target = recurringReminders.find(r => r.id === id);
+      
+      if (!target) {
+          // Search static maps
+           for (const date in reminders) {
+               const found = reminders[date].find(r => r.id === id);
+               if (found) {
+                   target = found;
+                   break;
+               }
+           }
+      }
+
+      if (target) {
+          const updated = { ...target, isCompleted: !target.isCompleted };
+          await DataService.updateReminder(user.id, updated);
+      }
+    } catch (e) {
+      console.error("Failed to toggle reminder", e);
+    }
+  }, [user, recurringReminders, reminders]);
 
   const handleDeleteReminder = useCallback(async (id: string, dateOverride?: string) => {
     if (!user) return;
@@ -657,7 +708,15 @@ const App: React.FC = () => {
                 <div className="text-sm text-gray-400 dark:text-gray-600 italic px-1">{t.noEventsToday}</div>
             ) : (
                 todayEvents.events.map(event => (
-                    <div key={event.id} className="group flex items-center gap-3 p-2.5 rounded-xl bg-white dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all">
+                    <div key={event.id} className={`group flex items-center gap-3 p-2.5 rounded-xl bg-white dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 hover:shadow-md transition-all ${event.isCompleted ? 'opacity-60' : ''}`}>
+                         {/* Toggle Completion */}
+                        <button 
+                             onClick={(e) => { e.stopPropagation(); handleToggleReminder(event.id); }}
+                             className={`shrink-0 transition-colors ${event.isCompleted ? 'text-gray-400' : 'text-gray-300 hover:text-primary-500'}`}
+                        >
+                            {event.isCompleted ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+                        </button>
+                        
                         <div className={`w-1 h-8 rounded-full ${
                             event.category === 'health' ? 'bg-red-500' :
                             event.category === 'personal' ? 'bg-green-500' :
@@ -667,7 +726,9 @@ const App: React.FC = () => {
                             'bg-blue-500'
                         }`} />
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">{event.title}</p>
+                            <p className={`text-sm font-semibold truncate ${event.isCompleted ? 'line-through text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}>
+                                {event.title}
+                            </p>
                             <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                                 <span>{event.time}</span>
                                 {event.repeat && event.repeat !== 'none' && (
@@ -694,24 +755,21 @@ const App: React.FC = () => {
     <div className="flex flex-row gap-2 mb-4">
         <button 
           onClick={() => handleQuickAdd('events')}
-          className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors border border-transparent dark:border-gray-700 shadow-sm"
+          className="flex-1 flex items-center justify-center p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors border border-transparent dark:border-gray-700 shadow-sm"
         >
-            <Plus size={18} />
-            <span className="text-[10px] sm:text-xs font-semibold text-center leading-tight">{t.addReminder}</span>
+            <span className="text-xs sm:text-sm font-semibold text-center leading-tight whitespace-normal">{t.addReminder}</span>
         </button>
         <button 
           onClick={() => handleQuickAdd('todos')}
-          className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors border border-transparent dark:border-gray-700 shadow-sm"
+          className="flex-1 flex items-center justify-center p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors border border-transparent dark:border-gray-700 shadow-sm"
         >
-            <ListTodo size={18} />
-            <span className="text-[10px] sm:text-xs font-semibold text-center leading-tight">{t.addTodo}</span>
+            <span className="text-xs sm:text-sm font-semibold text-center leading-tight whitespace-normal">{t.addTodo}</span>
         </button>
         <button 
           onClick={() => setIsAllTodosOpen(true)}
-          className="flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 p-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors border border-transparent dark:border-gray-700 shadow-sm"
+          className="flex-1 flex items-center justify-center p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors border border-transparent dark:border-gray-700 shadow-sm"
         >
-            <CheckSquare size={18} />
-            <span className="text-[10px] sm:text-xs font-semibold text-center leading-tight">{t.allTodos}</span>
+            <span className="text-xs sm:text-sm font-semibold text-center leading-tight whitespace-normal">{t.allTodos}</span>
         </button>
     </div>
   );

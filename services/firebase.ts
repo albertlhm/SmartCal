@@ -1,7 +1,7 @@
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getAnalytics } from "firebase/analytics";
+import firebase from "firebase/compat/app";
+import "firebase/compat/auth";
+import "firebase/compat/firestore";
+import "firebase/compat/analytics";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDS3qMVjUiJo7xWGMNnPD24g39o5_Xf84U",
@@ -13,14 +13,16 @@ const firebaseConfig = {
   measurementId: "G-5P4MQ8TPYY"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+// Initialize Firebase
+// Check if apps are already initialized to avoid hot-reload errors
+const app = !firebase.apps.length ? firebase.initializeApp(firebaseConfig) : firebase.app();
+const auth = firebase.auth();
+const db = firebase.firestore();
 
 // Initialize Analytics (only in browser environment)
 let analytics;
 if (typeof window !== 'undefined') {
-  analytics = getAnalytics(app);
+  analytics = firebase.analytics();
 }
 
 export { auth, db, analytics };
