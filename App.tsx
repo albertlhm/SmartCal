@@ -114,7 +114,12 @@ const App: React.FC = () => {
     );
     const unsubTodos = DataService.subscribeToTodos(user.id, (all) => {
         const map: Record<string, Todo[]> = {};
-        all.forEach(t => { if(!map[t.date]) map[t.date]=[]; map[t.date].push(t); });
+        // Sort by createdAt descending (newest first) to ensure consistent order for drag & drop
+        const sorted = all.sort((a, b) => b.createdAt - a.createdAt);
+        sorted.forEach(t => { 
+          if(!map[t.date]) map[t.date]=[]; 
+          map[t.date].push(t); 
+        });
         setTodos(map);
       }
     );
@@ -232,6 +237,37 @@ const App: React.FC = () => {
           await DataService.updateTodo(user.id, updated);
       }
   };
+
+  const handleReorderTodo = async (draggedTodoId: string, targetTodoId: string) => {
+    if (!user) return;
+    
+    // Find the todos
+    let draggedTodo: Todo | undefined;
+    let targetTodo: Todo | undefined;
+
+    for (const date in todos) {
+      const d = todos[date].find(t => t.id === draggedTodoId);
+      if (d) draggedTodo = d;
+      const t = todos[date].find(t => t.id === targetTodoId);
+      if (t) targetTodo = t;
+    }
+
+    if (draggedTodo && targetTodo) {
+      // Swap timestamps to persist order (assuming sorting by createdAt)
+      const tempTime = draggedTodo.createdAt;
+      const updatedDragged = { ...draggedTodo, createdAt: targetTodo.createdAt };
+      const updatedTarget = { ...targetTodo, createdAt: tempTime };
+
+      try {
+        await Promise.all([
+          DataService.updateTodo(user.id, updatedDragged),
+          DataService.updateTodo(user.id, updatedTarget)
+        ]);
+      } catch (e) {
+        console.error("Failed to reorder todos", e);
+      }
+    }
+  };
   
   // Handlers for settings buttons
   const toggleNotifications = () => setNotificationsEnabled(!notificationsEnabled);
@@ -245,7 +281,12 @@ const App: React.FC = () => {
       const recurring = recurringReminders.filter(r => isOccurrence(r, selectedDateStr));
       return [...staticRem, ...recurring];
   }, [selectedDateStr, reminders, recurringReminders]);
-  const currentTodos = selectedDateStr ? (todos[selectedDateStr] || []) : [];
+  const currentTodos = useMemo(() => {
+    if (!selectedDateStr) return [];
+    const list = todos[selectedDateStr] || [];
+    // Ensure display respects createdAt sort
+    return [...list].sort((a, b) => b.createdAt - a.createdAt);
+  }, [selectedDateStr, todos]);
 
   // Logic for Today's Schedule (Reminders)
   const todayDateStr = useMemo(() => {
@@ -267,7 +308,7 @@ const App: React.FC = () => {
     return Object.entries(todos).flatMap(([date, list]) => 
         (list as Todo[]).map(todo => ({ ...todo, dateKey: date }))
       ).sort((a, b) => {
-        return b.dateKey.localeCompare(a.dateKey);
+        return b.dateKey.localeCompare(a.dateKey) || b.createdAt - a.createdAt;
       });
   }, [todos]);
 
@@ -552,7 +593,23 @@ const App: React.FC = () => {
       {isPanelOpen && selectedDateStr && (
         <>
           <div className="fixed inset-0 bg-gray-900/20 dark:bg-black/60 backdrop-blur-sm z-40" onClick={handleClosePanel} />
-          <DayPanel dateStr={selectedDateStr} isOpen={isPanelOpen} onClose={handleClosePanel} reminders={currentReminders} todos={currentTodos} onAddReminder={handleAddReminder} onDeleteReminder={handleDeleteReminder} onUpdateReminder={handleUpdateReminder} onAddTodo={handleAddTodo} onToggleTodo={handleToggleTodo} onUpdateTodo={handleUpdateTodo} onDeleteTodo={handleDeleteTodo} language={language} initialTab={initialPanelTab} />
+          <DayPanel 
+            dateStr={selectedDateStr} 
+            isOpen={isPanelOpen} 
+            onClose={handleClosePanel} 
+            reminders={currentReminders} 
+            todos={currentTodos} 
+            onAddReminder={handleAddReminder} 
+            onDeleteReminder={handleDeleteReminder} 
+            onUpdateReminder={handleUpdateReminder} 
+            onAddTodo={handleAddTodo} 
+            onToggleTodo={handleToggleTodo} 
+            onUpdateTodo={handleUpdateTodo} 
+            onDeleteTodo={handleDeleteTodo} 
+            onReorderTodo={handleReorderTodo}
+            language={language} 
+            initialTab={initialPanelTab} 
+          />
         </>
       )}
 

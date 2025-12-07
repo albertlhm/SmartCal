@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Reminder, Todo, Language, RepeatFrequency, EventCategory } from '../types';
-import { X, Clock, Trash2, Plus, Sparkles, Loader2, ListTodo, Calendar as CalendarIcon, CheckSquare, Square, Pencil, Save, XCircle, Repeat, Tag, Bell } from 'lucide-react';
+import { X, Clock, Trash2, Plus, Sparkles, Loader2, ListTodo, Calendar as CalendarIcon, CheckSquare, Square, Pencil, Save, XCircle, Repeat, Tag, GripVertical } from 'lucide-react';
 import { parseNaturalLanguageEvent } from '../services/geminiService';
 import { TRANSLATIONS } from '../constants/translations';
 
@@ -17,6 +17,7 @@ interface DayPanelProps {
   onToggleTodo: (id: string) => void;
   onUpdateTodo: (todo: Todo) => void;
   onDeleteTodo: (id: string) => void;
+  onReorderTodo?: (draggedId: string, targetId: string) => void;
   language: Language;
   initialTab?: 'events' | 'todos';
 }
@@ -43,6 +44,7 @@ const DayPanel: React.FC<DayPanelProps> = ({
   onToggleTodo,
   onUpdateTodo,
   onDeleteTodo,
+  onReorderTodo,
   language,
   initialTab = 'events',
 }) => {
@@ -52,6 +54,9 @@ const DayPanel: React.FC<DayPanelProps> = ({
   
   // Edit Mode State
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Drag and Drop State for Todos
+  const [draggedTodoId, setDraggedTodoId] = useState<string | null>(null);
 
   // Manual Event Form State
   const [title, setTitle] = useState('');
@@ -169,7 +174,7 @@ const DayPanel: React.FC<DayPanelProps> = ({
             text: todoText,
             completed: false,
             date: dateStr,
-            createdAt: Date.now(),
+            createdAt: Date.now(), // Newest will have highest timestamp
         };
         onAddTodo(newTodo);
     }
@@ -211,6 +216,30 @@ const DayPanel: React.FC<DayPanelProps> = ({
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  // DnD Handlers
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    if (!onReorderTodo) return;
+    setDraggedTodoId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    // Firefox requires dataTransfer to be set
+    e.dataTransfer.setData('text/plain', id);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+     if (!onReorderTodo) return;
+     e.preventDefault();
+     e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, targetId: string) => {
+     if (!onReorderTodo) return;
+     e.preventDefault();
+     if (draggedTodoId && draggedTodoId !== targetId) {
+        onReorderTodo(draggedTodoId, targetId);
+     }
+     setDraggedTodoId(null);
   };
 
   const displayDate = new Date(dateStr).toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US', {
@@ -335,10 +364,22 @@ const DayPanel: React.FC<DayPanelProps> = ({
                     </div>
                  ) : (
                      todos.map(todo => (
-                        <div key={todo.id} className={`group flex items-center p-4 bg-white dark:bg-gray-800/60 border rounded-xl transition-all ${editingId === todo.id ? 'ring-2 ring-primary-500 border-transparent' : 'border-gray-100 dark:border-gray-800 shadow-sm'}`}>
+                        <div 
+                            key={todo.id} 
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, todo.id)}
+                            onDragOver={handleDragOver}
+                            onDrop={(e) => handleDrop(e, todo.id)}
+                            className={`group flex items-center p-4 bg-white dark:bg-gray-800/60 border rounded-xl transition-all ${
+                                editingId === todo.id ? 'ring-2 ring-primary-500 border-transparent' : 'border-gray-100 dark:border-gray-800 shadow-sm'
+                            } ${draggedTodoId === todo.id ? 'opacity-50 border-dashed border-primary-300' : ''}`}
+                        >
+                             <div className="mr-2 text-gray-300 dark:text-gray-600 cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
+                                <GripVertical size={16} />
+                             </div>
                              <button 
                                 onClick={() => onToggleTodo(todo.id)}
-                                className={`mr-4 transition-colors ${todo.completed ? 'text-primary-500' : 'text-gray-300 dark:text-gray-600 hover:text-primary-500'}`}
+                                className={`mr-2 transition-colors ${todo.completed ? 'text-primary-500' : 'text-gray-300 dark:text-gray-600 hover:text-primary-500'}`}
                              >
                                  {todo.completed ? <CheckSquare size={24} /> : <Square size={24} />}
                              </button>
