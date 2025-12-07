@@ -405,10 +405,10 @@ const App: React.FC = () => {
             </div>
             
             {/* Mobile Tab: Today's Agenda */}
-            <div className={`${(window.innerWidth < 768 && mobileTab === 'today') ? 'flex' : 'hidden'} flex-col h-full p-4 overflow-y-auto`}>
+            <div className={`${(window.innerWidth < 768 && mobileTab === 'today') ? 'flex' : 'hidden'} flex-col h-full p-4 overflow-y-auto relative`}>
                  <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white flex items-center gap-2"><CalendarDays size={20} className="text-primary-500"/> {t.todaySchedule}</h2>
                  <p className="text-sm text-gray-500 mb-4">{todayDateStr}</p>
-                 <div className="space-y-3">
+                 <div className="space-y-3 pb-20">
                     {todayReminders.length === 0 ? (
                         <div className="text-center py-20 text-gray-400">
                             <p>{t.noEventsToday}</p>
@@ -425,10 +425,21 @@ const App: React.FC = () => {
                         ))
                     )}
                  </div>
+                 {/* Floating Action Button for Today */}
+                 <button 
+                    onClick={() => {
+                        setSelectedDateStr(todayDateStr);
+                        setInitialPanelTab('events');
+                        setIsPanelOpen(true);
+                    }}
+                    className="fixed bottom-20 right-4 w-12 h-12 bg-primary-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary-700 active:scale-95 transition-all z-50"
+                 >
+                    <Plus size={24} />
+                 </button>
             </div>
 
             {/* Mobile Tab: Todos (Render AllTodosModal content inline) */}
-            <div className={`${(window.innerWidth < 768 && mobileTab === 'todos') ? 'block' : 'hidden'} h-full overflow-y-auto`}>
+            <div className={`${(window.innerWidth < 768 && mobileTab === 'todos') ? 'block' : 'hidden'} h-full overflow-y-auto relative`}>
                  <AllTodosModal 
                     isOpen={true} 
                     onClose={() => setMobileTab('calendar')} 
@@ -437,6 +448,18 @@ const App: React.FC = () => {
                     onDeleteTodo={handleDeleteTodo} 
                     language={language} 
                  />
+                 {/* Floating Action Button for Todos */}
+                 <button 
+                    onClick={() => {
+                         // Default to today if no date selected
+                         if (!selectedDateStr) setSelectedDateStr(todayDateStr);
+                         setInitialPanelTab('todos');
+                         setIsPanelOpen(true);
+                    }}
+                    className="fixed bottom-20 right-4 w-12 h-12 bg-primary-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary-700 active:scale-95 transition-all z-50"
+                 >
+                    <Plus size={24} />
+                 </button>
             </div>
 
             {/* Mobile Tab: Stats */}

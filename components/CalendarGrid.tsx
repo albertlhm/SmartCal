@@ -86,6 +86,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const calendarDays = useMemo(() => {
     const days: DayData[] = [];
     
+    // Fix: Use local time for "Today" calculation to avoid UTC mismatch
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
     if (view === 'month') {
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
@@ -98,16 +102,15 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         const prevMonthLastDay = new Date(year, month, 0).getDate();
         for (let i = startDayOfWeek - 1; i >= 0; i--) {
           const d = new Date(year, month - 1, prevMonthLastDay - i);
+          const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
           days.push({
             date: d,
             isCurrentMonth: false,
-            isToday: false,
-            dateString: d.toISOString().split('T')[0],
+            isToday: ds === todayStr,
+            dateString: ds,
           });
         }
         // Current month
-        const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
         for (let i = 1; i <= daysInMonth; i++) {
           const d = new Date(year, month, i);
           const ds = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
@@ -122,25 +125,23 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         const remainingCells = 42 - days.length;
         for (let i = 1; i <= remainingCells; i++) {
           const d = new Date(year, month + 1, i);
+          const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
           days.push({
              date: d,
              isCurrentMonth: false,
-             isToday: false,
-             dateString: d.toISOString().split('T')[0],
+             isToday: ds === todayStr,
+             dateString: ds,
           });
         }
     } else if (view === 'week') {
         // Find start of week (Sunday) for currentDate
         const startOfWeek = new Date(currentDate);
         startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
-        
-        const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
 
         for (let i = 0; i < 7; i++) {
             const d = new Date(startOfWeek);
             d.setDate(startOfWeek.getDate() + i);
-            const ds = d.toISOString().split('T')[0];
+            const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             days.push({
                 date: d,
                 isCurrentMonth: d.getMonth() === currentDate.getMonth(),
@@ -153,8 +154,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
 
         for (let i = 1; i <= daysInMonth; i++) {
            const d = new Date(year, month, i);
