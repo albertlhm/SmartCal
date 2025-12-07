@@ -345,7 +345,9 @@ const App: React.FC = () => {
                 </div>
             </div>
             
-             <button onClick={() => setIsAllTodosOpen(true)} className="w-full flex items-center justify-center p-3 mt-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors"><span className="text-sm font-semibold">{t.allTodos}</span></button>
+             <button onClick={() => setIsAllTodosOpen(true)} className="w-full flex items-center justify-center p-3 mt-3 mb-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors border border-transparent dark:border-gray-700 shadow-sm shrink-0">
+                 <span className="text-sm font-semibold whitespace-nowrap">{t.allTodos}</span>
+             </button>
           </div>
         </div>
 
