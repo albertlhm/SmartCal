@@ -12,7 +12,7 @@ import { TRANSLATIONS } from './constants/translations';
 import { AuthService } from './services/authService';
 import { DataService } from './services/dataService';
 import { isOccurrence } from './utils/recurrence';
-import { Calendar, Moon, Sun, Search, Languages, Download, Upload, Plus, LogIn, LogOut, User as UserIcon, Bell, BellOff, PieChart, AlertTriangle, CalendarDays, CheckSquare, ChevronRight, Square } from 'lucide-react';
+import { Calendar, Moon, Sun, Search, Languages, Download, Upload, Plus, LogIn, LogOut, User as UserIcon, Bell, BellOff, PieChart, AlertTriangle, CalendarDays, CheckSquare, ChevronRight, Square, ListTodo, Trash2 } from 'lucide-react';
 
 // Storage keys
 const STORAGE_KEY_THEME = 'smartcal_theme';
@@ -262,6 +262,15 @@ const App: React.FC = () => {
       return [...staticRem, ...recurring].sort((a, b) => a.time.localeCompare(b.time));
   }, [reminders, recurringReminders, todayDateStr]);
 
+  // Flattened Todos for Mobile List View
+  const allTodosList = useMemo(() => {
+    return Object.entries(todos).flatMap(([date, list]) => 
+        (list as Todo[]).map(todo => ({ ...todo, dateKey: date }))
+      ).sort((a, b) => {
+        return b.dateKey.localeCompare(a.dateKey);
+      });
+  }, [todos]);
+
   const QuickActionButtons = () => (
     <div className="flex flex-row gap-2 mb-4 shrink-0">
         <button onClick={() => handleQuickAdd('events')} className="flex-1 flex items-center justify-center p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors border border-transparent dark:border-gray-700 shadow-sm">
@@ -441,20 +450,46 @@ const App: React.FC = () => {
                  </button>
             </div>
 
-            {/* Mobile Tab: Todos (Render AllTodosModal content inline) */}
-            <div className={`${(window.innerWidth < 768 && mobileTab === 'todos') ? 'block' : 'hidden'} h-full overflow-y-auto relative`}>
-                 <AllTodosModal 
-                    isOpen={true} 
-                    onClose={() => setMobileTab('calendar')} 
-                    todos={todos} 
-                    onToggleTodo={handleToggleTodo} 
-                    onDeleteTodo={handleDeleteTodo} 
-                    language={language} 
-                 />
+            {/* Mobile Tab: Todos */}
+            <div className={`${(window.innerWidth < 768 && mobileTab === 'todos') ? 'flex' : 'hidden'} flex-col h-full p-4 overflow-y-auto relative`}>
+                 <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white flex items-center gap-2"><ListTodo size={20} className="text-primary-500"/> {t.todoList}</h2>
+                 
+                 <div className="space-y-3 pb-20">
+                    {allTodosList.length === 0 ? (
+                        <div className="text-center py-20 text-gray-400">
+                            <p>No tasks found.</p>
+                        </div>
+                    ) : (
+                        allTodosList.map(todo => (
+                            <div key={todo.id} className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4 transition-all">
+                                <button 
+                                   onClick={() => handleToggleTodo(todo.id)}
+                                   className={`transition-colors shrink-0 ${todo.completed ? 'text-primary-500' : 'text-gray-300 dark:text-gray-600'}`}
+                                >
+                                    {todo.completed ? <CheckSquare size={24} /> : <Square size={24} />}
+                                </button>
+                                <div className="flex-1 min-w-0">
+                                    <h4 className={`text-base font-medium truncate ${todo.completed ? 'line-through text-gray-400' : 'text-gray-900 dark:text-white'}`}>
+                                        {todo.text}
+                                    </h4>
+                                    <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                                        <CalendarDays size={12} /> {todo.dateKey}
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={() => handleDeleteTodo(todo.id)}
+                                    className="p-2 text-gray-300 hover:text-red-500 transition-colors shrink-0"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
+                        ))
+                    )}
+                 </div>
+
                  {/* Floating Action Button for Todos */}
                  <button 
                     onClick={() => {
-                         // Default to today if no date selected
                          if (!selectedDateStr) setSelectedDateStr(todayDateStr);
                          setInitialPanelTab('todos');
                          setIsPanelOpen(true);
