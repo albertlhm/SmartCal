@@ -6,6 +6,9 @@ export const AuthService = {
   register: async (email: string, password: string): Promise<User> => {
     try {
       const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      if (!userCredential.user) {
+        throw new Error("Registration failed: User is null");
+      }
       return {
         id: userCredential.user.uid,
         username: userCredential.user.email || 'User'
@@ -18,6 +21,9 @@ export const AuthService = {
   login: async (email: string, password: string): Promise<User> => {
     try {
       const userCredential = await auth.signInWithEmailAndPassword(email, password);
+      if (!userCredential.user) {
+        throw new Error("Login failed: User is null");
+      }
       return {
         id: userCredential.user.uid,
         username: userCredential.user.email || 'User'

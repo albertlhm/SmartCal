@@ -222,7 +222,7 @@ const DayPanel: React.FC<DayPanelProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-y-0 right-0 w-full md:w-[450px] bg-white dark:bg-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-50 flex flex-col border-l border-gray-200 dark:border-gray-800">
+    <div className="fixed inset-y-0 right-0 w-full md:w-[450px] bg-white dark:bg-gray-900 shadow-2xl transform transition-transform duration-300 ease-in-out z-[80] flex flex-col border-l border-gray-200 dark:border-gray-800">
       
       {/* Header */}
       <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-start bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-10">

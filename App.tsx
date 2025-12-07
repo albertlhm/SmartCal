@@ -400,16 +400,30 @@ const App: React.FC = () => {
 
             {/* Mobile Tab: Todos (Render AllTodosModal content inline) */}
             <div className={`${(window.innerWidth < 768 && mobileTab === 'todos') ? 'block' : 'hidden'} h-full overflow-y-auto`}>
-                 <AllTodosModal isOpen={true} onClose={()=>{}} todos={todos} onToggleTodo={()=>{}} onDeleteTodo={()=>{}} language={language} />
+                 <AllTodosModal 
+                    isOpen={true} 
+                    onClose={() => setMobileTab('calendar')} 
+                    todos={todos} 
+                    onToggleTodo={handleToggleTodo} 
+                    onDeleteTodo={handleDeleteTodo} 
+                    language={language} 
+                 />
                  {/* Hack: Reusing modal logic but we want it inline. Ideally refactor Modal content to standalone component. 
                      For now, since AllTodosModal is fixed inset, it covers the screen which works for a tab view effect. 
-                     However, onClose does nothing here to keep tab active.
                  */}
             </div>
 
             {/* Mobile Tab: Stats */}
             <div className={`${(window.innerWidth < 768 && mobileTab === 'stats') ? 'block' : 'hidden'} h-full overflow-y-auto`}>
-                 <StatsModal isOpen={true} onClose={()=>{}} reminders={reminders} recurringReminders={recurringReminders} todos={todos} language={language} currentDate={currentDate} />
+                 <StatsModal 
+                    isOpen={true} 
+                    onClose={() => setMobileTab('calendar')} 
+                    reminders={reminders} 
+                    recurringReminders={recurringReminders} 
+                    todos={todos} 
+                    language={language} 
+                    currentDate={currentDate} 
+                 />
             </div>
 
             {/* Mobile Tab: Profile */}
