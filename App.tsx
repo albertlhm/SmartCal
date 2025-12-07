@@ -12,7 +12,7 @@ import { TRANSLATIONS } from './constants/translations';
 import { AuthService } from './services/authService';
 import { DataService } from './services/dataService';
 import { isOccurrence } from './utils/recurrence';
-import { Calendar, Moon, Sun, Search, Languages, Download, Upload, Plus, ListTodo, LogIn, LogOut, User as UserIcon, Bell, BellOff, PieChart, AlertTriangle } from 'lucide-react';
+import { Calendar, Moon, Sun, Search, Languages, Download, Upload, Plus, ListTodo, LogIn, LogOut, User as UserIcon, Bell, BellOff, PieChart, AlertTriangle, CheckSquare, Square, ChevronRight } from 'lucide-react';
 
 // Storage keys
 const STORAGE_KEY_THEME = 'smartcal_theme';
@@ -218,9 +218,19 @@ const App: React.FC = () => {
   const handleAddTodo = async (todo: Todo) => { if(user) DataService.addTodo(user.id, todo); };
   const handleUpdateTodo = async (t: Todo) => { if(user) DataService.updateTodo(user.id, t); };
   const handleDeleteTodo = async (id: string) => { if(user) DataService.deleteTodo(user.id, id); };
+  
   const handleToggleTodo = async (id: string) => { 
-      // ... find todo logic ...
-      // if(user) DataService.updateTodo... 
+      if (!user) return;
+      let targetTodo: Todo | undefined;
+      // Search through all dates
+      for (const date in todos) {
+          const found = todos[date].find(t => t.id === id);
+          if (found) { targetTodo = found; break; }
+      }
+      if (targetTodo) {
+          const updated = { ...targetTodo, completed: !targetTodo.completed };
+          await DataService.updateTodo(user.id, updated);
+      }
   };
   
   // Handlers for settings buttons
@@ -237,8 +247,15 @@ const App: React.FC = () => {
   }, [selectedDateStr, reminders, recurringReminders]);
   const currentTodos = selectedDateStr ? (todos[selectedDateStr] || []) : [];
 
+  // Sidebar List of Todos
+  const sidebarTodos = useMemo(() => {
+    const all = Object.values(todos).flat();
+    // Sort by createdAt descending (newest first)
+    return all.sort((a, b) => b.createdAt - a.createdAt);
+  }, [todos]);
+
   const QuickActionButtons = () => (
-    <div className="flex flex-row gap-2 mb-4">
+    <div className="flex flex-row gap-2 mb-4 shrink-0">
         <button onClick={() => handleQuickAdd('events')} className="flex-1 flex items-center justify-center p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors border border-transparent dark:border-gray-700 shadow-sm">
             <span className="text-xs sm:text-sm font-semibold text-center whitespace-nowrap">{t.addReminder}</span>
         </button>
@@ -255,7 +272,7 @@ const App: React.FC = () => {
       {/* --- SIDEBAR (Desktop) / TOPBAR (Mobile) --- */}
       <div className="w-full md:w-20 lg:w-72 bg-white dark:bg-gray-900 md:border-r border-gray-200 dark:border-gray-800 flex-shrink-0 flex md:flex-col items-center md:items-start p-3 md:p-6 justify-between transition-colors duration-300 shadow-sm md:shadow-none z-20 relative">
         {/* Logo */}
-        <div className="flex items-center justify-between w-full md:w-auto md:block">
+        <div className="flex items-center justify-between w-full md:w-auto md:block shrink-0">
           <div className="flex items-center space-x-3 mb-0 md:mb-6 justify-center md:justify-start">
             <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary-500/30 shrink-0">
               <Calendar size={20} />
@@ -271,19 +288,19 @@ const App: React.FC = () => {
         </div>
 
         {/* Desktop Sidebar Content */}
-        <div className="hidden md:flex flex-col w-full h-full overflow-hidden items-center lg:items-stretch">
-          <button onClick={user ? handleLogout : handleLogin} className="flex items-center gap-2 mb-4 px-2 lg:px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm w-full justify-center lg:justify-start group">
+        <div className="hidden md:flex flex-col w-full h-full overflow-hidden items-center lg:items-stretch min-h-0">
+          <button onClick={user ? handleLogout : handleLogin} className="flex items-center gap-2 mb-4 px-2 lg:px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm w-full justify-center lg:justify-start group shrink-0">
              <div className="p-1 bg-gray-200 dark:bg-gray-700 rounded-full shrink-0"><UserIcon size={24} className="text-gray-500 dark:text-gray-300 lg:w-[14px] lg:h-[14px]" /></div>
              <div className="hidden lg:flex flex-col items-start overflow-hidden">
                 <span className="font-medium truncate max-w-full text-gray-700 dark:text-gray-200">{authLoading ? '...' : (user ? user.username : t.guest)}</span>
              </div>
           </button>
-          <button onClick={() => setIsSearchOpen(true)} className="hidden lg:flex w-full mb-2 items-center gap-2 px-3 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-xl transition-all text-sm group shadow-sm">
+          <button onClick={() => setIsSearchOpen(true)} className="hidden lg:flex w-full mb-2 items-center gap-2 px-3 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-xl transition-all text-sm group shadow-sm shrink-0">
             <Search size={16} className="group-hover:text-primary-500 transition-colors" />
             <span>{t.searchPlaceholder}</span>
             <span className="ml-auto text-[10px] opacity-60 border border-gray-300 dark:border-gray-600 px-1.5 py-0.5 rounded bg-white dark:bg-gray-700">{t.searchCmd}</span>
           </button>
-          <button onClick={() => setIsStatsOpen(true)} className="hidden lg:flex w-full mb-4 items-center gap-2 px-3 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-xl transition-all text-sm font-medium">
+          <button onClick={() => setIsStatsOpen(true)} className="hidden lg:flex w-full mb-4 items-center gap-2 px-3 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-xl transition-all text-sm font-medium shrink-0">
              <PieChart size={16} /><span>{t.dashboard}</span>
           </button>
           
@@ -292,14 +309,45 @@ const App: React.FC = () => {
           <button onClick={() => setIsStatsOpen(true)} className="flex lg:hidden mb-4 p-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-xl transition-colors"><PieChart size={28} /></button>
           <button onClick={() => handleQuickAdd('events')} className="flex lg:hidden mb-4 p-4 bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-xl transition-colors"><Plus size={28} /></button>
 
-          <div className="hidden lg:flex flex-col flex-1 overflow-hidden">
+          <div className="hidden lg:flex flex-col flex-1 overflow-hidden min-h-0">
             <QuickActionButtons />
-            <button onClick={() => setIsAllTodosOpen(true)} className="w-full flex items-center justify-center p-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors mb-4"><span className="text-sm font-semibold">{t.allTodos}</span></button>
+            
+            {/* Sidebar Todo List */}
+            <div className="flex-1 bg-gray-50/50 dark:bg-gray-800/30 rounded-2xl border border-gray-100 dark:border-gray-800/50 flex flex-col min-h-0 overflow-hidden">
+                <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800/50 flex items-center justify-between shrink-0">
+                   <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t.allTodos}</span>
+                   <button onClick={() => setIsAllTodosOpen(true)} className="text-[10px] text-primary-500 hover:text-primary-600 font-medium flex items-center gap-0.5">
+                      {t.more} <ChevronRight size={10} />
+                   </button>
+                </div>
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+                   {sidebarTodos.length === 0 ? (
+                       <div className="text-center py-8 text-gray-400 dark:text-gray-600">
+                          <ListTodo size={24} className="mx-auto mb-2 opacity-30" />
+                          <p className="text-xs">{t.noEventsToday}</p>
+                       </div>
+                   ) : (
+                       sidebarTodos.map(todo => (
+                           <div key={todo.id} className="group flex items-center gap-2 p-2 rounded-lg hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm border border-transparent hover:border-gray-100 dark:hover:border-gray-700 transition-all">
+                               <button 
+                                 onClick={() => handleToggleTodo(todo.id)}
+                                 className={`${todo.completed ? 'text-gray-400' : 'text-primary-500'}`}
+                               >
+                                   {todo.completed ? <CheckSquare size={14} /> : <Square size={14} />}
+                               </button>
+                               <span className={`text-xs truncate flex-1 ${todo.completed ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
+                                   {todo.text}
+                               </span>
+                           </div>
+                       ))
+                   )}
+                </div>
+            </div>
           </div>
         </div>
 
         {/* Desktop Footer Actions */}
-        <div className="hidden md:flex flex-col w-full mt-auto pt-4 border-t border-gray-100 dark:border-gray-800 items-center lg:items-stretch gap-2 lg:gap-0">
+        <div className="hidden md:flex flex-col w-full mt-auto pt-4 border-t border-gray-100 dark:border-gray-800 items-center lg:items-stretch gap-2 lg:gap-0 shrink-0">
            <div className="flex flex-col lg:flex-row items-center justify-between gap-1">
               <button onClick={toggleNotifications} className={`p-2.5 rounded-lg ${notificationsEnabled ? 'text-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}`}>{notificationsEnabled ? <Bell size={24} className="lg:w-[18px] lg:h-[18px]" /> : <BellOff size={24} className="lg:w-[18px] lg:h-[18px]" />}</button>
               <button onClick={handleExport} className="p-2.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"><Download size={24} className="lg:w-[18px] lg:h-[18px]" /></button>
@@ -411,7 +459,7 @@ const App: React.FC = () => {
       {window.innerWidth >= 768 && (
           <>
             <SearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} reminders={reminders} recurringReminders={recurringReminders} todos={todos} onSelectDate={handleSelectDate} language={language} />
-            <AllTodosModal isOpen={isAllTodosOpen} onClose={() => setIsAllTodosOpen(false)} todos={todos} onToggleTodo={()=>{}} onDeleteTodo={()=>{}} language={language} />
+            <AllTodosModal isOpen={isAllTodosOpen} onClose={() => setIsAllTodosOpen(false)} todos={todos} onToggleTodo={handleToggleTodo} onDeleteTodo={handleDeleteTodo} language={language} />
             <StatsModal isOpen={isStatsOpen} onClose={() => setIsStatsOpen(false)} reminders={reminders} recurringReminders={recurringReminders} todos={todos} language={language} currentDate={currentDate} />
           </>
       )}
