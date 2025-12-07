@@ -168,7 +168,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
     }
 
     return days;
-  }, [currentDate, view]);
+    // Added currentTime.getDate() to dependencies to ensure today highlight updates automatically when date changes
+  }, [currentDate, view, currentTime.getDate()]);
 
   // --- Handlers ---
 

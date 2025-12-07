@@ -251,7 +251,10 @@ const App: React.FC = () => {
   const todayDateStr = useMemo(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  }, []);
+  }, [
+    // Recompute when day changes (check every render or use a timer if needed, but App re-renders on clock tick)
+    lastCheckedMinute.current
+  ]);
 
   const todayReminders = useMemo(() => {
       const staticRem = reminders[todayDateStr] || [];
@@ -432,7 +435,7 @@ const App: React.FC = () => {
                         setInitialPanelTab('events');
                         setIsPanelOpen(true);
                     }}
-                    className="fixed bottom-20 right-4 w-12 h-12 bg-primary-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary-700 active:scale-95 transition-all z-50"
+                    className="fixed bottom-20 right-4 w-12 h-12 bg-primary-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary-700 active:scale-95 transition-all z-[75]"
                  >
                     <Plus size={24} />
                  </button>
@@ -456,7 +459,7 @@ const App: React.FC = () => {
                          setInitialPanelTab('todos');
                          setIsPanelOpen(true);
                     }}
-                    className="fixed bottom-20 right-4 w-12 h-12 bg-primary-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary-700 active:scale-95 transition-all z-50"
+                    className="fixed bottom-20 right-4 w-12 h-12 bg-primary-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary-700 active:scale-95 transition-all z-[75]"
                  >
                     <Plus size={24} />
                  </button>
