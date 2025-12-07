@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { DayData, Reminder, Todo, Language, EventCategory, CalendarView } from '../types';
-import { ChevronLeft, ChevronRight, CheckSquare, ChevronDown, Eye, EyeOff, LayoutGrid, Rows, Calendar as CalendarIcon, Clock, X, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckSquare, ChevronDown, Eye, EyeOff, LayoutGrid, Rows, Calendar as CalendarIcon, Clock, X, ArrowRight, Trash2 } from 'lucide-react';
 import { TRANSLATIONS } from '../constants/translations';
 import { isOccurrence } from '../utils/recurrence';
 
@@ -21,6 +21,7 @@ interface CalendarGridProps {
   view: CalendarView;
   onViewChange: (view: CalendarView) => void;
   onEventDrop: (eventId: string, newDate: string) => void;
+  onDeleteReminder: (id: string) => void;
 }
 
 const CalendarGrid: React.FC<CalendarGridProps> = ({
@@ -39,7 +40,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   onToggleFocusMode,
   view,
   onViewChange,
-  onEventDrop
+  onEventDrop,
+  onDeleteReminder
 }) => {
   const t = TRANSLATIONS[language];
   const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
@@ -234,7 +236,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
             <span className={`
               text-lg md:text-lg font-semibold w-8 h-8 flex items-center justify-center rounded-full transition-all
               ${day.isToday 
-                ? 'bg-primary-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)] ring-2 ring-primary-100 dark:ring-primary-900' 
+                ? 'bg-primary-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)] ring-2 ring-primary-100 dark:ring-primary-900 shadow-glow' 
                 : ''}
             `}>
               {day.date.getDate()}
@@ -316,28 +318,31 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   );
 
   return (
-    <div className="flex flex-col h-full min-h-[400px] md:min-h-0 bg-white dark:bg-gray-900 rounded-2xl md:rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors duration-300 relative">
+    <div className="flex flex-col h-full min-h-[320px] md:min-h-0 bg-white dark:bg-gray-900 rounded-2xl md:rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden transition-colors duration-300 relative">
       {/* Header */}
       <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 z-20 shrink-0">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-1">
             <button 
               onClick={() => {
                 setPickerYear(currentDate.getFullYear());
                 setIsMonthPickerOpen(!isMonthPickerOpen);
               }}
-              className="flex items-center gap-2 px-2 py-1 -ml-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              className="flex items-center gap-2 px-2 py-1 -ml-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shrink-0"
             >
                <h2 className="text-lg md:text-xl font-bold text-gray-800 dark:text-white tracking-tight">{monthYearString}</h2>
                <ChevronDown size={18} className={`text-gray-400 transition-transform duration-200 ${isMonthPickerOpen ? 'rotate-180' : ''}`} />
             </button>
-            <div className="hidden md:flex items-center justify-center px-4 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-full border border-gray-100 dark:border-gray-700">
-               <span className="text-xl font-mono font-medium text-gray-600 dark:text-gray-300 tracking-widest">
-                  {currentTime.toLocaleTimeString([], { hour12: false })}
-               </span>
+            {/* Live Clock */}
+            <div className="flex-1 flex justify-center">
+                 <div className="hidden md:flex items-center justify-center px-4 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-full border border-gray-100 dark:border-gray-700">
+                    <span className="text-xl font-mono font-medium text-gray-600 dark:text-gray-300 tracking-widest">
+                       {currentTime.toLocaleTimeString([], { hour12: false })}
+                    </span>
+                 </div>
             </div>
         </div>
 
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1 shrink-0">
            {/* View Switcher */}
            <div className="hidden md:flex bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 mr-2">
                <button onClick={() => onViewChange('month')} className={`p-1.5 rounded-md transition-all ${view === 'month' ? 'bg-white dark:bg-gray-700 shadow-sm text-primary-600' : 'text-gray-500'}`} title={t.viewMonth}><LayoutGrid size={16} /></button>
@@ -412,10 +417,16 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
                 </div>
                 <div className="space-y-2 mb-4">
                     {getDayEvents(previewDate).slice(0, 3).map(rem => (
-                        <div key={rem.id} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                        <div key={rem.id} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 group">
                              <div className={`w-1.5 h-1.5 rounded-full ${rem.color === 'red' ? 'bg-red-500' : 'bg-blue-500'}`} />
                              <span className="flex-1 truncate">{rem.title}</span>
                              <span className="text-xs text-gray-400">{rem.time}</span>
+                             <button 
+                                onClick={(e) => { e.stopPropagation(); onDeleteReminder(rem.id); }}
+                                className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity p-0.5"
+                             >
+                                <Trash2 size={12} />
+                             </button>
                         </div>
                     ))}
                     {getDayEvents(previewDate).length === 0 && <p className="text-sm text-gray-400 italic">{t.noEventsToday}</p>}

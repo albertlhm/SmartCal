@@ -52,7 +52,7 @@ export type Language = 'zh' | 'en';
 
 export type CalendarView = 'month' | 'week' | 'agenda';
 
-export type MobileTab = 'calendar' | 'todos' | 'stats' | 'profile';
+export type MobileTab = 'calendar' | 'today' | 'todos' | 'stats' | 'profile';
 
 // History / Undo Types
 export type ActionType = 'ADD_REMINDER' | 'UPDATE_REMINDER' | 'DELETE_REMINDER' | 'ADD_TODO' | 'UPDATE_TODO' | 'DELETE_TODO';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, ListTodo, PieChart, User } from 'lucide-react';
+import { Calendar, ListTodo, PieChart, User, CalendarDays } from 'lucide-react';
 import { MobileTab, Language } from '../types';
 import { TRANSLATIONS } from '../constants/translations';
 
@@ -14,6 +14,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange, language 
 
   const tabs: { id: MobileTab; label: string; icon: React.ElementType }[] = [
     { id: 'calendar', label: t.tabCalendar, icon: Calendar },
+    { id: 'today', label: t.tabToday, icon: CalendarDays },
     { id: 'todos', label: t.tabTodos, icon: ListTodo },
     { id: 'stats', label: t.tabStats, icon: PieChart },
     { id: 'profile', label: t.tabProfile, icon: User },
@@ -28,13 +29,13 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabChange, language 
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`flex flex-col items-center justify-center py-3 w-full transition-colors ${
+              className={`flex flex-col items-center justify-center py-2.5 w-full transition-colors ${
                 isActive 
                   ? 'text-primary-600 dark:text-primary-400' 
                   : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
               }`}
             >
-              <tab.icon size={22} className={`mb-1 transition-transform ${isActive ? 'scale-110' : ''}`} strokeWidth={isActive ? 2.5 : 2} />
+              <tab.icon size={20} className={`mb-1 transition-transform ${isActive ? 'scale-110' : ''}`} strokeWidth={isActive ? 2.5 : 2} />
               <span className="text-[10px] font-medium">{tab.label}</span>
             </button>
           );

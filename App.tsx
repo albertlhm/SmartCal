@@ -12,7 +12,7 @@ import { TRANSLATIONS } from './constants/translations';
 import { AuthService } from './services/authService';
 import { DataService } from './services/dataService';
 import { isOccurrence } from './utils/recurrence';
-import { Calendar, Moon, Sun, Search, Languages, Download, Upload, Plus, ListTodo, LogIn, LogOut, User as UserIcon, Bell, BellOff, PieChart, AlertTriangle, CheckSquare, Square, ChevronRight } from 'lucide-react';
+import { Calendar, Moon, Sun, Search, Languages, Download, Upload, Plus, LogIn, LogOut, User as UserIcon, Bell, BellOff, PieChart, AlertTriangle, CalendarDays, CheckSquare, ChevronRight, Square } from 'lucide-react';
 
 // Storage keys
 const STORAGE_KEY_THEME = 'smartcal_theme';
@@ -247,12 +247,17 @@ const App: React.FC = () => {
   }, [selectedDateStr, reminders, recurringReminders]);
   const currentTodos = selectedDateStr ? (todos[selectedDateStr] || []) : [];
 
-  // Sidebar List of Todos
-  const sidebarTodos = useMemo(() => {
-    const all = Object.values(todos).flat();
-    // Sort by createdAt descending (newest first)
-    return all.sort((a, b) => b.createdAt - a.createdAt);
-  }, [todos]);
+  // Logic for Today's Schedule (Reminders)
+  const todayDateStr = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }, []);
+
+  const todayReminders = useMemo(() => {
+      const staticRem = reminders[todayDateStr] || [];
+      const recurring = recurringReminders.filter(r => isOccurrence(r, todayDateStr));
+      return [...staticRem, ...recurring].sort((a, b) => a.time.localeCompare(b.time));
+  }, [reminders, recurringReminders, todayDateStr]);
 
   const QuickActionButtons = () => (
     <div className="flex flex-row gap-2 mb-4 shrink-0">
@@ -312,37 +317,35 @@ const App: React.FC = () => {
           <div className="hidden lg:flex flex-col flex-1 overflow-hidden min-h-0">
             <QuickActionButtons />
             
-            {/* Sidebar Todo List */}
+            {/* Sidebar "Today's Agenda" List */}
             <div className="flex-1 bg-gray-50/50 dark:bg-gray-800/30 rounded-2xl border border-gray-100 dark:border-gray-800/50 flex flex-col min-h-0 overflow-hidden">
                 <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800/50 flex items-center justify-between shrink-0">
-                   <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t.allTodos}</span>
-                   <button onClick={() => setIsAllTodosOpen(true)} className="text-[10px] text-primary-500 hover:text-primary-600 font-medium flex items-center gap-0.5">
-                      {t.more} <ChevronRight size={10} />
+                   <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t.todaySchedule}</span>
+                   <button onClick={() => handleSelectDate(todayDateStr)} className="text-[10px] text-primary-500 hover:text-primary-600 font-medium flex items-center gap-0.5">
+                      {t.viewDetails} <ChevronRight size={10} />
                    </button>
                 </div>
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
-                   {sidebarTodos.length === 0 ? (
+                   {todayReminders.length === 0 ? (
                        <div className="text-center py-8 text-gray-400 dark:text-gray-600">
-                          <ListTodo size={24} className="mx-auto mb-2 opacity-30" />
+                          <CalendarDays size={24} className="mx-auto mb-2 opacity-30" />
                           <p className="text-xs">{t.noEventsToday}</p>
                        </div>
                    ) : (
-                       sidebarTodos.map(todo => (
-                           <div key={todo.id} className="group flex items-center gap-2 p-2 rounded-lg hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm border border-transparent hover:border-gray-100 dark:hover:border-gray-700 transition-all">
-                               <button 
-                                 onClick={() => handleToggleTodo(todo.id)}
-                                 className={`${todo.completed ? 'text-gray-400' : 'text-primary-500'}`}
-                               >
-                                   {todo.completed ? <CheckSquare size={14} /> : <Square size={14} />}
-                               </button>
-                               <span className={`text-xs truncate flex-1 ${todo.completed ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
-                                   {todo.text}
+                       todayReminders.map(rem => (
+                           <div key={rem.id} className="group flex items-center gap-2 p-2 rounded-lg hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm border border-transparent hover:border-gray-100 dark:hover:border-gray-700 transition-all cursor-pointer" onClick={() => handleSelectDate(todayDateStr)}>
+                               <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${rem.color === 'red' ? 'bg-red-500' : 'bg-blue-500'}`} />
+                               <span className={`text-xs truncate flex-1 ${rem.isCompleted ? 'text-gray-400 line-through' : 'text-gray-700 dark:text-gray-300'}`}>
+                                   {rem.title}
                                </span>
+                               <span className="text-[10px] text-gray-400">{rem.time}</span>
                            </div>
                        ))
                    )}
                 </div>
             </div>
+            
+             <button onClick={() => setIsAllTodosOpen(true)} className="w-full flex items-center justify-center p-3 mt-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors"><span className="text-sm font-semibold">{t.allTodos}</span></button>
           </div>
         </div>
 
@@ -394,8 +397,32 @@ const App: React.FC = () => {
                        view={calendarView}
                        onViewChange={setCalendarView}
                        onEventDrop={handleEventDrop}
+                       onDeleteReminder={handleDeleteReminder}
                      />
                 </div>
+            </div>
+            
+            {/* Mobile Tab: Today's Agenda */}
+            <div className={`${(window.innerWidth < 768 && mobileTab === 'today') ? 'flex' : 'hidden'} flex-col h-full p-4 overflow-y-auto`}>
+                 <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white flex items-center gap-2"><CalendarDays size={20} className="text-primary-500"/> {t.todaySchedule}</h2>
+                 <p className="text-sm text-gray-500 mb-4">{todayDateStr}</p>
+                 <div className="space-y-3">
+                    {todayReminders.length === 0 ? (
+                        <div className="text-center py-20 text-gray-400">
+                            <p>{t.noEventsToday}</p>
+                        </div>
+                    ) : (
+                        todayReminders.map(rem => (
+                            <div key={rem.id} onClick={() => handleSelectDate(todayDateStr)} className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center gap-4">
+                                <div className={`w-1.5 h-10 rounded-full ${rem.color === 'red' ? 'bg-red-500' : 'bg-blue-500'}`} />
+                                <div className="flex-1">
+                                    <h4 className={`text-lg font-medium ${rem.isCompleted ? 'line-through text-gray-400' : 'text-gray-900 dark:text-white'}`}>{rem.title}</h4>
+                                    <div className="text-sm text-gray-500">{rem.time} • {t[`cat_${rem.category || 'work'}` as keyof typeof t]}</div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                 </div>
             </div>
 
             {/* Mobile Tab: Todos (Render AllTodosModal content inline) */}
@@ -408,9 +435,6 @@ const App: React.FC = () => {
                     onDeleteTodo={handleDeleteTodo} 
                     language={language} 
                  />
-                 {/* Hack: Reusing modal logic but we want it inline. Ideally refactor Modal content to standalone component. 
-                     For now, since AllTodosModal is fixed inset, it covers the screen which works for a tab view effect. 
-                 */}
             </div>
 
             {/* Mobile Tab: Stats */}
