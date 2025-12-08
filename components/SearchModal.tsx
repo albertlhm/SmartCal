@@ -24,6 +24,23 @@ const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose, reminders, r
     }
   }, [isOpen]);
 
+  // Handle Esc key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   const results = useMemo(() => {
     if (!query.trim()) return [];
     
